@@ -1,5 +1,8 @@
 <?php
 session_start();
+if(empty($_SESSION['csrf_token'])){
+  $_SESSION['csrf_token']=bin2hex(random_bytes(32));
+}
 if (!isset($_SESSION['admin_id'])) { header("Location: login.php"); exit; }
 include('../config/db.php');
 
@@ -7,6 +10,14 @@ $msg = "";
 // Handle form submission to add a new student
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Collect form data
+    if( !isset($_POST['csrf_token']) ||
+    !isset($_SESSION['csrf_token']) ||
+    !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])){
+$msg="security validation is failed please refresh and try aagain";
+    }
+    else{
+
+    
     $name = trim($_POST['name']);
     $email = trim($_POST['email']);
     $enrollment = trim($_POST['enrollment_no']);
@@ -46,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $check_stmt->close();
     }
+}
 }
 ?>
 <!DOCTYPE html>
@@ -125,6 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <div class="content-card">
         <form method="post">
+          <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']);?>">
           <div class="form-grid">
             <div class="input-group"><label for="name">Full Name</label><input type="text" id="name" name="name" required></div>
             <div class="input-group"><label for="email">Email Address</label><input type="email" id="email" name="email" required></div>
